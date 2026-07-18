@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Silver Ledger">
+<meta name="theme-color" content="#f5f0e1">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Silver Ledger</title>
+<style>
+:root{
+  --bg:#e8e1cd;          /* aged paper */
+  --panel:#f5f0e1;       /* cream stock */
+  --panel2:#ece5d0;      /* deeper cream */
+  --line:#c8bc9c;        /* faded rule */
+  --txt:#2b271c;         /* iron gall ink */
+  --dim:#8a7d5c;         /* faded ink */
+  --amber:#8c6f2f;       /* old gold */
+  --green:#3e6b4a;       /* credit green */
+  --red:#8f3d2c;         /* debit red */
+  --ink:#2e4a38;         /* hunter green */
+  --mono:Georgia,"Palatino Linotype","Book Antiqua","Times New Roman",serif;
+  --sans:Georgia,"Palatino Linotype","Book Antiqua","Times New Roman",serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--txt);font-family:var(--sans);min-height:100%}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);background-image:linear-gradient(180deg,rgba(115,95,55,.07),rgba(115,95,55,0) 240px)}
+.wrap{max-width:520px;margin:0 auto;padding:14px 14px 96px}
+
+/* header - engraved masthead */
+header{display:flex;align-items:baseline;justify-content:space-between;padding:10px 2px 8px;border-bottom:3px double var(--line);margin-bottom:14px}
+header h1{font-size:16px;font-weight:600;letter-spacing:.3em;color:var(--txt);text-transform:uppercase}
+#clock{font-size:11px;color:var(--dim);font-style:italic}
+
+/* spot gauge - certificate card */
+.gauge{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:20px 18px 16px;position:relative;box-shadow:inset 0 0 0 4px var(--panel),inset 0 0 0 5px var(--line)}
+.gauge .lbl{font-size:10px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;display:flex;justify-content:space-between}
+#src.live{color:var(--green)}
+#src.man{color:var(--amber)}
+#src.err{color:var(--red)}
+.gauge .big{font-size:50px;font-weight:600;line-height:1.2;color:var(--txt);font-variant-numeric:tabular-nums}
+.gauge .big small{font-size:19px;color:var(--dim);font-weight:400;font-style:italic}
+#gold{font-size:12px;color:var(--dim);margin-top:2px;font-style:italic}
+#spark{margin-top:10px;height:40px}
+#spark svg{width:100%;height:40px;display:block}
+#sparkcap{font-size:9px;color:var(--dim);letter-spacing:.12em;display:flex;justify-content:space-between;margin-top:2px}
+.anchors{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:2px;overflow:hidden;margin-top:12px}
+.anchors div{background:var(--panel2);padding:10px 12px}
+.anchors .k{font-size:9px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase}
+.anchors .v{font-size:17px;margin-top:2px;font-variant-numeric:tabular-nums}
+
+/* manual row */
+.manrow{display:flex;gap:8px;margin-top:12px}
+.manrow input{flex:1}
+input,select,button{font-family:var(--sans);font-size:16px;color:var(--txt);background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:11px 12px;outline:none;width:100%}
+input:focus,select:focus{border-color:var(--amber)}
+input::placeholder{color:#b3a67f;font-style:italic}
+button{cursor:pointer;width:auto;white-space:nowrap;letter-spacing:.06em}
+button.act{background:var(--ink);color:#f5f0e1;border-color:var(--ink);font-weight:600;text-transform:uppercase;font-size:12px;letter-spacing:.16em;padding-top:13px;padding-bottom:13px}
+button.ghost{color:var(--dim);background:none}
+button.warn{color:var(--red);border-color:var(--red);background:none}
+
+/* tabs */
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--panel);border-top:3px double var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav button{flex:1;background:none;border:none;border-radius:0;padding:13px 0 11px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+nav button.on{color:var(--ink);box-shadow:inset 0 3px 0 var(--amber);font-weight:600}
+section{display:none;margin-top:14px}
+section.on{display:block}
+h2{font-size:11px;letter-spacing:.26em;color:var(--dim);text-transform:uppercase;margin:20px 2px 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+
+/* stack - ledger */
+.tot{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:14px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;box-shadow:inset 0 0 0 3px var(--panel),inset 0 0 0 4px var(--line)}
+.tot .k{font-size:9px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase}
+.tot .v{font-size:16px;margin-top:3px;font-variant-numeric:tabular-nums}
+.sortrow{display:flex;gap:8px;margin-top:10px;align-items:center}
+.sortrow select{flex:1;padding:8px 10px;font-size:12px}
+.sortrow .cnt{font-size:11px;color:var(--dim);white-space:nowrap;font-style:italic}
+.hold{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:12px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hold.editing{border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+.hold .nm{font-size:14px}
+.hold .meta{font-size:11px;color:var(--dim);margin-top:2px;font-style:italic}
+.hold .val{font-size:15px;text-align:right;font-variant-numeric:tabular-nums}
+.hold .pl{font-size:11px;text-align:right}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.hold .btns{display:flex;gap:6px}
+.hold button{padding:6px 9px;font-size:12px;color:var(--dim);background:none;border:1px solid var(--line)}
+.hold button.armed{color:var(--red);border-color:var(--red)}
+form .row{display:flex;gap:8px;margin-top:8px}
+form .row>*{flex:1}
+.empty{color:var(--dim);font-size:13px;padding:14px 4px;font-style:italic}
+
+/* calc + stats */
+.out{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:14px 16px;margin-top:10px}
+.out .line{display:flex;justify-content:space-between;padding:6px 0;font-size:14px;font-variant-numeric:tabular-nums;border-bottom:1px dotted var(--line)}
+.out .line:last-child{border-bottom:none}
+.out .line span:first-child{color:var(--dim);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding-top:2px}
+.note{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.6;font-style:italic}
+.bar{height:8px;background:var(--panel2);border:1px solid var(--line);border-radius:2px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--amber)}
+.bar i.g{background:var(--green)}
+.split{display:flex;font-size:11px;color:var(--dim);justify-content:space-between;margin-top:4px;font-style:italic}
+.fmtrow{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dotted var(--line)}
+.fmtrow:last-child{border-bottom:none}
+.fmtrow .b{color:var(--dim)}
+
+/* snackbar */
+#snack{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(64px + env(safe-area-inset-bottom));background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:10px 14px;display:none;align-items:center;gap:14px;z-index:9;font-size:13px;box-shadow:0 4px 16px rgba(70,55,25,.25)}
+#snack button{padding:6px 12px;font-size:11px}
+
+/* alert banner */
+#alertbar{display:none;background:var(--ink);color:#f5f0e1;border-radius:2px;padding:10px 14px;margin-bottom:12px;justify-content:space-between;align-items:center;gap:10px;font-size:13px}
+#alertbar button{background:none;border:1px solid rgba(245,240,225,.45);color:#f5f0e1;padding:4px 10px;font-size:11px}
+
+/* guide */
+.glinks a{display:block;padding:10px 2px;border-bottom:1px dotted var(--line);color:var(--txt);text-decoration:none;font-size:14px}
+.glinks a:last-child{border-bottom:none}
+.glinks a span{color:var(--dim);font-size:11px;font-style:italic;float:right;padding-top:3px}
+ul.tips{margin:4px 0 0 18px}
+ul.tips li{font-size:13px;line-height:1.55;margin-bottom:7px}
+
+/* quote compare */
+.best{box-shadow:inset 0 0 0 1px var(--green);border-color:var(--green)}
+
+@media(prefers-reduced-motion:no-preference){
+  .flash{animation:fl .5s}
+  @keyframes fl{0%{color:var(--amber)}100%{color:var(--txt)}}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Silver Ledger</h1><div id="clock"></div></header>
+<div id="alertbar"><span id="alert-txt"></span><button onclick="dismissAlert()">Dismiss</button></div>
+
+<div class="gauge">
+  <div class="lbl"><span>Silver · XAG/USD</span><span id="src" class="man">MANUAL</span></div>
+  <div class="big" id="spot">–<small> /oz</small></div>
+  <div id="gold"></div>
+  <div id="spark"></div>
+  <div id="sparkcap"></div>
+  <div class="anchors">
+    <div><div class="k">$1 FV 90%</div><div class="v" id="a1">–</div></div>
+    <div><div class="k">$100 FV bag</div><div class="v" id="a2">–</div></div>
+    <div><div class="k">10 oz bar</div><div class="v" id="a3">–</div></div>
+    <div><div class="k">Kilo</div><div class="v" id="a4">–</div></div>
+  </div>
+  <div class="manrow">
+    <input type="number" inputmode="decimal" step="0.01" id="manspot" placeholder="Set spot manually">
+    <button class="ghost" onclick="setManual()">Set</button>
+    <button class="act" onclick="fetchSpot(true)">Refresh</button>
+  </div>
+</div>
+
+<section id="tab-stack" class="on">
+  <h2>Holdings</h2>
+  <div class="tot">
+    <div><div class="k">Ounces</div><div class="v" id="toz">0</div></div>
+    <div><div class="k">Melt value</div><div class="v" id="tmelt">$0</div></div>
+    <div><div class="k">Gain / loss</div><div class="v" id="tpl">$0</div></div>
+  </div>
+  <div class="sortrow">
+    <select id="sort" onchange="renderList()">
+      <option value="new">Newest first</option>
+      <option value="old">Oldest first</option>
+      <option value="val">Highest value</option>
+      <option value="pl">Best gain/loss</option>
+      <option value="name">Name A-Z</option>
+    </select>
+    <span class="cnt" id="cnt"></span>
+  </div>
+  <div id="list"></div>
+  <h2 id="formhead">Add holding</h2>
+  <form onsubmit="submitHold(event)">
+    <input id="f-name" placeholder="Name (e.g. Quarter bag, SDB order)">
+    <div class="row">
+      <select id="f-fmt" onchange="cozToggle('f')"></select>
+      <input id="f-qty" type="number" inputmode="decimal" step="any" placeholder="Qty" required>
+    </div>
+    <div class="row" id="f-cozrow" style="display:none">
+      <input id="f-coz" type="number" inputmode="decimal" step="any" placeholder="Ounces per unit">
+    </div>
+    <div class="row">
+      <input id="f-cost" type="number" inputmode="decimal" step="0.01" placeholder="Total cost $ (optional)">
+      <input id="f-date" type="date" title="Purchase date">
+    </div>
+    <div class="row">
+      <button class="act" type="submit" id="f-submit">Add</button>
+      <button class="ghost" type="button" id="f-cancel" style="display:none" onclick="cancelEdit()">Cancel</button>
+    </div>
+  </form>
+  <div id="soldwrap" style="display:none">
+    <h2>Sold · realized</h2>
+    <div id="soldlist"></div>
+  </div>
+</section>
+
+<section id="tab-calc">
+  <h2>Premium check</h2>
+  <div style="display:flex;gap:8px">
+    <select id="c-fmt" style="flex:1" onchange="cozToggle('c')"></select>
+    <input id="c-qty" type="number" inputmode="decimal" step="any" placeholder="Qty" value="1" style="flex:1">
+  </div>
+  <div style="margin-top:8px;display:none" id="c-cozrow"><input id="c-coz" type="number" inputmode="decimal" step="any" placeholder="Ounces per unit"></div>
+  <div style="margin-top:8px"><input id="c-price" type="number" inputmode="decimal" step="0.01" placeholder="Dealer price $ (total)"></div>
+  <div style="margin-top:8px"><button class="act" style="width:100%" onclick="calc()">Compute</button></div>
+  <div class="out" id="c-out" style="display:none">
+    <div class="line"><span>Ounces</span><b id="r-oz"></b></div>
+    <div class="line"><span>Price / oz</span><b id="r-poz"></b></div>
+    <div class="line"><span>Melt value</span><b id="r-melt"></b></div>
+    <div class="line"><span>Premium / oz</span><b id="r-prem"></b></div>
+    <div class="line"><span>Premium %</span><b id="r-pct"></b></div>
+  </div>
+  <div id="q-saverow" style="display:none;gap:8px;margin-top:8px">
+    <input id="q-label" placeholder="Dealer / note" style="flex:1">
+    <button class="act" onclick="saveQuote()">Save quote</button>
+  </div>
+  <div id="watchwrap" style="display:none">
+    <h2>Saved quotes</h2>
+    <div id="watchlist"></div>
+    <div class="note">Premiums recompute against live spot. Green border marks the best price per ounce. Save the same item from a few dealers and buy the green one.</div>
+  </div>
+  <h2>Max price at target premium</h2>
+  <div style="display:flex;gap:8px">
+    <input id="t-pct" type="number" inputmode="decimal" step="0.1" value="8" placeholder="Target %" style="flex:1">
+    <button class="act" onclick="fairPrice()" style="flex:1">Compute</button>
+  </div>
+  <div class="out" id="t-out" style="display:none">
+    <div class="line"><span>Melt value</span><b id="t-melt"></b></div>
+    <div class="line"><span>Max total price</span><b id="t-max"></b></div>
+    <div class="line"><span>Max / oz</span><b id="t-maxoz"></b></div>
+  </div>
+  <div class="note">Uses the format and qty selected above. Under 0% premium means below melt. Junk silver reference: $1 face value = 0.715 oz, war nickel = 0.0563 oz, 40% half = 0.1479 oz. Check against the dealer's live checkout price, not a cached table.</div>
+</section>
+
+<section id="tab-stats">
+  <h2>Stack stats</h2>
+  <div class="out" id="stats-main"></div>
+  <h2>Goal</h2>
+  <div style="display:flex;gap:8px">
+    <input id="g-oz" type="number" inputmode="decimal" step="any" placeholder="Target ounces">
+    <button class="act" onclick="setGoal()">Set</button>
+  </div>
+  <div class="out" id="g-out" style="display:none">
+    <div class="line"><span>Progress</span><b id="g-txt"></b></div>
+    <div class="bar"><i id="g-bar" class="g" style="width:0%"></i></div>
+    <div class="split"><span id="g-have"></span><span id="g-need"></span></div>
+  </div>
+  <h2>Price alerts</h2>
+  <div style="display:flex;gap:8px">
+    <input id="al-hi" type="number" inputmode="decimal" step="0.01" placeholder="Alert above $">
+    <input id="al-lo" type="number" inputmode="decimal" step="0.01" placeholder="Alert below $">
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button class="act" style="flex:1" onclick="setAlerts()">Set</button>
+    <button class="ghost" style="flex:1" onclick="clearAlerts()">Clear</button>
+  </div>
+  <div class="note" id="al-msg">Checked on every price refresh while the app is open. A banner shows up top when spot crosses your line.</div>
+  <h2>Allocation</h2>
+  <div class="out" id="stats-alloc"></div>
+  <h2>By format</h2>
+  <div class="out" id="stats-fmt"></div>
+</section>
+
+<section id="tab-guide">
+  <h2>Coin melt values · live</h2>
+  <div class="out" id="g-melt"></div>
+  <h2>Typical premium ranges</h2>
+  <div class="out">
+    <div class="fmtrow"><span>100 oz bars</span><span><b>2 - 5%</b></span></div>
+    <div class="fmtrow"><span>10 oz / kilo bars</span><span><b>3 - 7%</b></span></div>
+    <div class="fmtrow"><span>Generic 1 oz rounds/bars</span><span><b>4 - 9%</b></span></div>
+    <div class="fmtrow"><span>90% junk (per FV)</span><span><b>2 - 12%</b></span></div>
+    <div class="fmtrow"><span>Maple Leafs</span><span><b>6 - 12%</b></span></div>
+    <div class="fmtrow"><span>Silver Eagles</span><span><b>15 - 30%</b></span></div>
+    <div class="fmtrow"><span>Fractional (under 1/2 oz)</span><span><b>15 - 40%</b></span></div>
+  </div>
+  <div class="note">Ranges float with demand. Run any real quote through the Premium tab before buying. Anything past the top of its range needs a reason.</div>
+  <h2>Buying rules</h2>
+  <div class="out"><ul class="tips">
+    <li>Compare cost per ounce, not sticker price. The Premium tab does this.</li>
+    <li>Card and PayPal usually cost 3-4% more than wire, ACH, or check. That difference is a whole premium tier.</li>
+    <li>Spot moves. The price that matters is at checkout, not the listing you saw this morning.</li>
+    <li>Discounts kick in at tubes (20 oz) and again at 100+ oz. Save quotes here to compare tiers.</li>
+    <li>Skip graded modern bullion. An MS70 sticker on a bullion coin is a premium you never get back.</li>
+    <li>Lowest premium builds the stack fastest. Eagles and 90% resell easiest. Balance both.</li>
+    <li>Take delivery insured with signature required. Log every lot on the Stack tab same day, with cost and date.</li>
+  </ul></div>
+  <h2>Verifying metal</h2>
+  <div class="out"><ul class="tips">
+    <li>Weight and dimensions first. A caliper and 0.01 g scale catch most fakes. Compare against mint specs.</li>
+    <li>Silver is not magnetic, but a strong neodymium magnet should slide slowly down a tilted bar (eddy current drag).</li>
+    <li>Ping test: real silver rings with a long chime. Dull thud is a problem.</li>
+    <li>Ice cube melts visibly faster on silver than on anything else its size (thermal conductivity).</li>
+    <li>Buying serious volume, get a Sigma Metalytics verifier. Non-destructive and fast.</li>
+  </ul></div>
+  <h2>Conversions</h2>
+  <div class="out">
+    <div class="fmtrow"><span>1 troy oz</span><span><b>31.1035 g · 1.09714 oz avdp</b></span></div>
+    <div class="fmtrow"><span>1 kilo</span><span><b>32.1507 ozt</b></span></div>
+    <div class="fmtrow"><span>$1 FV 90%</span><span><b>0.715 ozt</b></span></div>
+    <div class="fmtrow"><span>$1,000 FV bag</span><span><b>715 ozt</b></span></div>
+    <div class="fmtrow"><span>G/S ratio</span><span><b>gold ÷ silver spot</b></span></div>
+  </div>
+  <div class="note">Historically the gold/silver ratio has averaged far below recent levels. A high ratio is the classic argument for stacking silver over gold; a collapse in the ratio is the classic argument for trading silver into gold.</div>
+  <h2>Dealers</h2>
+  <div class="out glinks">
+    <a href="https://findbullionprices.com" target="_blank" rel="noopener">FindBullionPrices <span>compare all</span></a>
+    <a href="https://www.apmex.com" target="_blank" rel="noopener">APMEX <span>selection</span></a>
+    <a href="https://www.jmbullion.com" target="_blank" rel="noopener">JM Bullion <span>deals</span></a>
+    <a href="https://sdbullion.com" target="_blank" rel="noopener">SD Bullion <span>low premium</span></a>
+    <a href="https://monumentmetals.com" target="_blank" rel="noopener">Monument Metals <span>low premium</span></a>
+    <a href="https://www.boldpreciousmetals.com" target="_blank" rel="noopener">BOLD <span>low premium</span></a>
+    <a href="https://herobullion.com" target="_blank" rel="noopener">Hero Bullion <span>fractional</span></a>
+  </div>
+  <div class="note">Local coin shops skip shipping and sometimes sales tax quirks, and cash deals can beat online premiums. Worth knowing yours.</div>
+  <h2>Records &amp; selling</h2>
+  <div class="out"><ul class="tips">
+    <li>Your cost basis lives on the Stack tab. Export a backup after every purchase; that is your record when you sell.</li>
+    <li>Dealers buy generic near or below spot, Eagles and 90% closer to retail when demand is hot. Check buyback prices before choosing what to stack.</li>
+    <li>Physical silver is a collectible for US federal capital gains, taxed up to 28% on long-term gains. Some bulk sales trigger dealer 1099-B reporting. Not tax advice, just the shape of it.</li>
+  </ul></div>
+</section>
+
+<section id="tab-data">
+  <h2>Backup</h2>
+  <div class="note" style="margin-top:0">Browsers can evict local data if the app sits unopened too long (Safari does this after 7 days for home screen apps). Export a backup after big changes.</div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="act" style="flex:1" onclick="exportJSON()">Download backup</button>
+    <button class="ghost" style="flex:1" onclick="copyJSON()">Copy JSON</button>
+  </div>
+  <div style="margin-top:8px"><button class="ghost" style="width:100%" onclick="exportCSV()">Download holdings CSV</button></div>
+  <h2>Restore</h2>
+  <input type="file" id="imp-file" accept=".json,application/json" style="padding:9px 12px">
+  <div style="margin-top:8px"><button class="warn" style="width:100%" onclick="importJSON()">Import (replaces current holdings)</button></div>
+  <div class="note" id="data-msg"></div>
+</section>
+
+</div>
+<div id="snack"><span id="snack-txt"></span><button class="act" onclick="undoDel()">Undo</button></div>
+<nav>
+  <button class="on" onclick="tab('stack',this)">Stack</button>
+  <button onclick="tab('calc',this)">Premium</button>
+  <button onclick="tab('stats',this)">Stats</button>
+  <button onclick="tab('guide',this)">Guide</button>
+  <button onclick="tab('data',this)">Data</button>
+</nav>
+<script>
+/* ---------- formats (cat: b=bullion, j=junk/constitutional) ---------- */
+const FMTS=[
+ {id:"oz01",n:"1/10 oz",oz:0.1,cat:"b"},
+ {id:"oz025",n:"1/4 oz",oz:0.25,cat:"b"},
+ {id:"oz05",n:"1/2 oz",oz:0.5,cat:"b"},
+ {id:"oz1",n:"1 oz",oz:1,cat:"b"},
+ {id:"oz2",n:"2 oz",oz:2,cat:"b"},
+ {id:"oz5",n:"5 oz",oz:5,cat:"b"},
+ {id:"oz10",n:"10 oz",oz:10,cat:"b"},
+ {id:"kilo",n:"Kilo",oz:32.1507,cat:"b"},
+ {id:"oz100",n:"100 oz",oz:100,cat:"b"},
+ {id:"fv05",n:"50¢ FV 90%",oz:0.3575,cat:"j"},
+ {id:"fv1",n:"$1 FV 90%",oz:0.715,cat:"j"},
+ {id:"fv10",n:"$10 FV 90%",oz:7.15,cat:"j"},
+ {id:"fv100",n:"$100 FV 90%",oz:71.5,cat:"j"},
+ {id:"h40",n:"40% half",oz:0.1479,cat:"j"},
+ {id:"wn",n:"War nickel",oz:0.05626,cat:"j"},
+ {id:"ozc",n:"Custom oz",oz:1,cat:"b"}
+];
+for(const sel of ["f-fmt","c-fmt"]){
+  document.getElementById(sel).innerHTML=FMTS.map(f=>`<option value="${f.id}">${f.n}</option>`).join("");
+}
+const fmtById=id=>FMTS.find(f=>f.id===id)||FMTS[3];
+/* per-holding oz: custom formats carry their own weight */
+const holdOz=h=>(h.fmt==="ozc"?(h.customOz||1):fmtById(h.fmt).oz)*h.qty;
+const fmtName=h=>h.fmt==="ozc"?((h.customOz||1)+" oz custom"):fmtById(h.fmt).n;
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const usd=(n,d=2)=>"$"+n.toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ---------- storage adapter: Claude artifact -> Safari -> memory ---------- */
+const mem={};
+const store={
+  async get(k){
+    if(window.storage){try{const r=await window.storage.get(k);return r?r.value:null}catch(e){return null}}
+    try{return localStorage.getItem(k)}catch(e){return mem[k]??null}
+  },
+  async set(k,v){
+    if(window.storage){try{await window.storage.set(k,v);return}catch(e){}}
+    try{localStorage.setItem(k,v)}catch(e){mem[k]=v}
+  }
+};
+
+/* ---------- spot + history ---------- */
+let spot=0, gold=0, hist=[], lastFetch=0;
+const HIST_MAX=180, HIST_GAP=10*60*1000; // one point per 10 min, ~30h of live data
+
+function srcState(cls,txt){const el=$("src");el.className=cls;el.textContent=txt}
+
+function paint(){
+  $("spot").innerHTML=(spot?usd(spot):"–")+"<small> /oz</small>";
+  $("spot").classList.remove("flash");void $("spot").offsetWidth;$("spot").classList.add("flash");
+  $("gold").textContent=(gold&&spot>0)?("Gold "+usd(gold)+" · G/S ratio "+(gold/spot).toFixed(1)):"";
+  $("a1").textContent=spot?usd(spot*0.715):"–";
+  $("a2").textContent=spot?usd(spot*71.5,0):"–";
+  $("a3").textContent=spot?usd(spot*10,0):"–";
+  $("a4").textContent=spot?usd(spot*32.1507,0):"–";
+  drawSpark();
+  renderList();
+  renderStats();
+  renderGuide();
+  renderWatch();
+  checkAlerts();
+}
+
+function drawSpark(){
+  const pts=hist.filter(p=>p.s>0);
+  if(pts.length<2){$("spark").innerHTML="";$("sparkcap").textContent="";return}
+  const w=300,h=40,pad=2;
+  let min=Infinity,max=-Infinity;
+  pts.forEach(p=>{if(p.s<min)min=p.s;if(p.s>max)max=p.s});
+  const span=(max-min)||1;
+  const step=(w-pad*2)/(pts.length-1);
+  const poly=pts.map((p,i)=>{
+    const x=pad+i*step, y=h-pad-((p.s-min)/span)*(h-pad*2);
+    return x.toFixed(1)+","+y.toFixed(1);
+  }).join(" ");
+  $("spark").innerHTML=`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${poly}" fill="none" stroke="#8c6f2f" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
+  const first=new Date(pts[0].t), lastP=new Date(pts[pts.length-1].t);
+  const f=d=>d.toLocaleString("en-US",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
+  $("sparkcap").innerHTML=`<span>${f(first)}</span><span>LO ${usd(min)} · HI ${usd(max)}</span><span>${f(lastP)}</span>`;
+}
+
+async function saveHist(){await store.set("hist",JSON.stringify(hist))}
+
+function pushHist(s,g){
+  const now=Date.now();
+  const last=hist[hist.length-1];
+  if(last&&now-last.t<HIST_GAP)return;
+  hist.push({t:now,s,g});
+  if(hist.length>HIST_MAX)hist=hist.slice(-HIST_MAX);
+  saveHist();
+}
+
+async function fetchSpot(manualClick){
+  srcState("man","…");
+  const timed=async url=>{
+    const ctl=new AbortController();
+    const to=setTimeout(()=>ctl.abort(),8000);
+    try{const r=await fetch(url,{signal:ctl.signal});return await r.json()}
+    finally{clearTimeout(to)}
+  };
+  try{
+    const s=await timed("https://api.gold-api.com/price/XAG");
+    if(!s||typeof s.price!=="number"||!(s.price>0))throw new Error("bad payload");
+    spot=s.price;
+    try{const g=await timed("https://api.gold-api.com/price/XAU");if(g&&g.price>0)gold=g.price}catch(e){}
+    lastFetch=Date.now();
+    srcState("live","LIVE "+new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}));
+    await store.set("spot",String(spot));
+    if(gold)await store.set("gold",String(gold));
+    pushHist(spot,gold);
+    paint();
+  }catch(e){
+    srcState(spot?"man":"err",spot?"CACHED":"OFFLINE");
+    if(!spot){const s=await store.get("spot");if(s){spot=parseFloat(s);srcState("man","CACHED");paint()}}
+    if(manualClick&&!spot)srcState("err","NO DATA");
+  }
+}
+async function setManual(){
+  const v=parseFloat($("manspot").value);
+  if(!(v>0))return;
+  spot=v;srcState("man","MANUAL");$("manspot").value="";
+  await store.set("spot",String(spot));
+  paint();
+}
+
+/* ---------- holdings ---------- */
+const SEED=[
+ {id:1,name:"2026 Silver Eagle BU",fmt:"oz1",qty:1,cost:58.62},
+ {id:2,name:"1 oz rounds (at-spot deal)",fmt:"oz1",qty:7,cost:413.56},
+ {id:3,name:"Maple Leaf (random yr)",fmt:"oz1",qty:1,cost:61.34},
+ {id:4,name:"Buffalo rounds",fmt:"oz1",qty:10,cost:609.70},
+ {id:5,name:"1 oz rounds (secondary)",fmt:"oz1",qty:14,cost:881.22},
+ {id:6,name:"2026 Maple Leaf BU",fmt:"oz1",qty:1,cost:60.23},
+ {id:7,name:"1/10 oz rounds (secondary)",fmt:"oz01",qty:2,cost:27.92},
+ {id:8,name:"Aztec Calendar round",fmt:"oz1",qty:1,cost:67.16},
+ {id:9,name:"90% avg circ ($1 FV each)",fmt:"fv1",qty:6,cost:286.62},
+ {id:10,name:"Franklin halves BU",fmt:"fv05",qty:2,cost:49.26},
+ {id:11,name:"Silver Eagle (random yr)",fmt:"oz1",qty:1,cost:58.95},
+ {id:12,name:"1 oz bars (secondary)",fmt:"oz1",qty:2,cost:139.76},
+ {id:13,name:"1 oz bar APMEX",fmt:"oz1",qty:1,cost:72.61},
+ {id:14,name:"1/10 oz rounds APMEX",fmt:"oz01",qty:5,cost:52.40},
+ {id:15,name:"90% $10 FV roll",fmt:"fv10",qty:1,cost:429.79},
+ {id:16,name:"2 oz round (secondary)",fmt:"oz2",qty:1,cost:125.31},
+ {id:17,name:"5 oz bar (secondary)",fmt:"oz5",qty:1,cost:339.36}
+];
+let holds=[], editingId=null, armedId=null, armTimer=null, lastDeleted=null, snackTimer=null;
+let sold=[], watch=[], alerts={hi:0,lo:0}, alertDismissed=false, lastQuote=null;
+
+async function loadHolds(){
+  const raw=await store.get("holds");
+  if(raw){try{holds=JSON.parse(raw)}catch(e){holds=[]}}
+  else{holds=SEED.slice();saveHolds()}
+  renderList();renderStats();
+}
+async function saveHolds(){await store.set("holds",JSON.stringify(holds))}
+
+function cozToggle(prefix){
+  const on=$(prefix+"-fmt").value==="ozc";
+  $(prefix+"-cozrow").style.display=on?"flex":"none";
+  if(prefix==="c")$("c-cozrow").style.display=on?"block":"none";
+}
+
+function submitHold(ev){
+  ev.preventDefault();
+  const fmt=$("f-fmt").value, qty=parseFloat($("f-qty").value);
+  if(!(qty>0))return;
+  const customOz=fmt==="ozc"?(parseFloat($("f-coz").value)||0):undefined;
+  if(fmt==="ozc"&&!(customOz>0)){$("f-coz").focus();return}
+  const rec={
+    name:$("f-name").value.trim()||fmtById(fmt).n,
+    fmt, qty,
+    cost:parseFloat($("f-cost").value)||0,
+    date:$("f-date").value||""
+  };
+  if(customOz)rec.customOz=customOz;
+  if(editingId!==null){
+    const i=holds.findIndex(h=>h.id===editingId);
+    if(i>-1)holds[i]={...holds[i],...rec};
+    cancelEdit();
+  }else{
+    rec.id=Date.now();
+    holds.push(rec);
+  }
+  ["f-name","f-qty","f-cost","f-date","f-coz"].forEach(id=>$(id).value="");
+  saveHolds();renderList();renderStats();
+}
+
+function editHold(id){
+  const h=holds.find(x=>x.id===id);
+  if(!h)return;
+  editingId=id;
+  $("f-name").value=h.name;
+  $("f-fmt").value=h.fmt;cozToggle("f");
+  $("f-qty").value=h.qty;
+  $("f-cost").value=h.cost||"";
+  $("f-date").value=h.date||"";
+  $("f-coz").value=h.customOz||"";
+  $("formhead").textContent="Edit holding";
+  $("f-submit").textContent="Save";
+  $("f-cancel").style.display="block";
+  renderList();
+  $("f-name").scrollIntoView({behavior:"smooth",block:"center"});
+}
+function cancelEdit(){
+  editingId=null;
+  ["f-name","f-qty","f-cost","f-date","f-coz"].forEach(id=>$(id).value="");
+  $("formhead").textContent="Add holding";
+  $("f-submit").textContent="Add";
+  $("f-cancel").style.display="none";
+  renderList();
+}
+
+/* two-tap delete + undo */
+function delTap(id){
+  if(armedId===id){
+    clearTimeout(armTimer);armedId=null;
+    const i=holds.findIndex(h=>h.id===id);
+    if(i>-1){
+      lastDeleted={h:holds[i],i};
+      holds.splice(i,1);
+      saveHolds();renderList();renderStats();
+      $("snack-txt").textContent="Deleted "+lastDeleted.h.name;
+      $("snack").style.display="flex";
+      clearTimeout(snackTimer);
+      snackTimer=setTimeout(()=>{$("snack").style.display="none";lastDeleted=null},6000);
+    }
+  }else{
+    armedId=id;renderList();
+    clearTimeout(armTimer);
+    armTimer=setTimeout(()=>{if(armedId===id){armedId=null;renderList()}},2500);
+  }
+}
+function undoDel(){
+  if(!lastDeleted)return;
+  holds.splice(Math.min(lastDeleted.i,holds.length),0,lastDeleted.h);
+  lastDeleted=null;
+  clearTimeout(snackTimer);
+  $("snack").style.display="none";
+  saveHolds();renderList();renderStats();
+}
+
+function sortedHolds(){
+  const mode=$("sort").value, a=holds.slice();
+  const val=h=>holdOz(h)*spot;
+  const pl=h=>h.cost?val(h)-h.cost:-Infinity;
+  switch(mode){
+    case "old":return a.sort((x,y)=>x.id-y.id);
+    case "val":return a.sort((x,y)=>val(y)-val(x));
+    case "pl":return a.sort((x,y)=>pl(y)-pl(x));
+    case "name":return a.sort((x,y)=>x.name.localeCompare(y.name));
+    default:return a.sort((x,y)=>y.id-x.id);
+  }
+}
+
+function renderList(){
+  const el=$("list");
+  if(!holds.length){el.innerHTML='<div class="empty">Nothing logged yet. Add your first pickup below.</div>';}
+  else{
+    el.innerHTML=sortedHolds().map(h=>{
+      const oz=holdOz(h), melt=oz*spot, pl=h.cost?melt-h.cost:null;
+      const dateStr=h.date?" · "+h.date:"";
+      return `<div class="hold${h.id===editingId?" editing":""}">
+        <div><div class="nm">${esc(h.name)}</div>
+        <div class="meta">${h.qty} × ${esc(fmtName(h))} · ${oz.toFixed(2)} oz${h.cost?" · paid "+usd(h.cost,0):""}${esc(dateStr)}</div></div>
+        <div><div class="val">${spot?usd(melt,0):"–"}</div>
+        ${pl!==null&&spot?`<div class="pl ${pl>=0?"pos":"neg"}">${pl>=0?"+":""}${usd(pl,0)}</div>`:""}</div>
+        <div class="btns">
+        <button onclick="sellHold(${h.id})" title="Mark sold">$</button>
+        <button onclick="editHold(${h.id})">✎</button>
+        <button class="${armedId===h.id?"armed":""}" onclick="delTap(${h.id})">${armedId===h.id?"✕?":"✕"}</button>
+        </div></div>`;
+    }).join("");
+  }
+  let toz=0,tc=0;
+  holds.forEach(h=>{toz+=holdOz(h);tc+=h.cost||0});
+  $("cnt").textContent=holds.length+" lot"+(holds.length===1?"":"s");
+  $("toz").textContent=toz.toFixed(2);
+  $("tmelt").textContent=spot?usd(toz*spot,0):"–";
+  const pl=toz*spot-tc;
+  $("tpl").textContent=(spot&&tc)?((pl>=0?"+":"")+usd(pl,0)):"–";
+  $("tpl").className="v "+((spot&&tc)?(pl>=0?"pos":"neg"):"");
+}
+
+/* ---------- sold / realized ---------- */
+async function saveSold(){await store.set("sold",JSON.stringify(sold))}
+function sellHold(id){
+  const h=holds.find(x=>x.id===id);
+  if(!h)return;
+  const v=prompt('Sale total $ for "'+h.name+'":');
+  if(v===null)return;
+  const p=parseFloat(v);
+  if(!(p>0))return;
+  holds=holds.filter(x=>x.id!==id);
+  sold.push({...h,soldFor:p,soldDate:new Date().toISOString().slice(0,10)});
+  saveHolds();saveSold();
+  renderList();renderSold();renderStats();
+}
+function restoreSold(id){
+  const i=sold.findIndex(x=>x.id===id);
+  if(i<0)return;
+  const {soldFor,soldDate,...h}=sold[i];
+  sold.splice(i,1);
+  holds.push(h);
+  saveHolds();saveSold();
+  renderList();renderSold();renderStats();
+}
+function delSold(id){
+  const h=sold.find(x=>x.id===id);
+  if(!h)return;
+  if(!confirm('Permanently remove sold record "'+h.name+'"?'))return;
+  sold=sold.filter(x=>x.id!==id);
+  saveSold();renderSold();renderStats();
+}
+function renderSold(){
+  const w=$("soldwrap");
+  if(!sold.length){w.style.display="none";return}
+  w.style.display="block";
+  $("soldlist").innerHTML=sold.slice().reverse().map(h=>{
+    const rp=h.cost?h.soldFor-h.cost:null;
+    return `<div class="hold"><div><div class="nm">${esc(h.name)}</div>
+      <div class="meta">${h.qty} × ${esc(fmtName(h))}${h.cost?" · paid "+usd(h.cost,0):""} · sold ${usd(h.soldFor,0)}${h.soldDate?" · "+esc(h.soldDate):""}</div></div>
+      <div>${rp!==null?`<div class="pl ${rp>=0?"pos":"neg"}">${rp>=0?"+":""}${usd(rp,0)}</div>`:""}</div>
+      <div class="btns"><button onclick="restoreSold(${h.id})" title="Back to stack">↩</button><button onclick="delSold(${h.id})">✕</button></div></div>`;
+  }).join("");
+}
+
+/* ---------- saved quotes / dealer compare ---------- */
+async function saveWatch(){await store.set("watch",JSON.stringify(watch))}
+function saveQuote(){
+  if(!lastQuote)return;
+  watch.push({id:Date.now(),label:$("q-label").value.trim()||"Quote "+(watch.length+1),...lastQuote});
+  $("q-label").value="";
+  saveWatch();renderWatch();
+}
+function delQuote(id){watch=watch.filter(q=>q.id!==id);saveWatch();renderWatch()}
+function renderWatch(){
+  const w=$("watchwrap");
+  if(!watch.length){w.style.display="none";return}
+  w.style.display="block";
+  const rows=watch.slice().sort((a,b)=>a.price/a.oz-b.price/b.oz);
+  const bestId=rows[0].id;
+  $("watchlist").innerHTML=rows.map(q=>{
+    const poz=q.price/q.oz, prem=spot>0?(poz-spot)/spot*100:null;
+    return `<div class="hold${q.id===bestId?" best":""}"><div><div class="nm">${esc(q.label)}</div>
+      <div class="meta">${esc(q.desc)} · ${q.oz.toFixed(2)} oz · total ${usd(q.price)}</div></div>
+      <div><div class="val">${usd(poz)}/oz</div>${prem!==null?`<div class="pl ${prem<=0?"pos":""}">${prem>=0?"+":""}${prem.toFixed(1)}%</div>`:""}</div>
+      <div class="btns"><button onclick="delQuote(${q.id})">✕</button></div></div>`;
+  }).join("");
+}
+
+/* ---------- price alerts ---------- */
+async function saveAlerts(){await store.set("alerts",JSON.stringify(alerts))}
+function alertMsg(){
+  const parts=[];
+  if(alerts.hi>0)parts.push("above "+usd(alerts.hi));
+  if(alerts.lo>0)parts.push("below "+usd(alerts.lo));
+  $("al-msg").textContent=parts.length?("Active: alert "+parts.join(", alert ")+".")
+    :"Checked on every price refresh while the app is open. A banner shows up top when spot crosses your line.";
+}
+function setAlerts(){
+  alerts={hi:parseFloat($("al-hi").value)||0,lo:parseFloat($("al-lo").value)||0};
+  $("al-hi").value=$("al-lo").value="";
+  alertDismissed=false;
+  saveAlerts();alertMsg();checkAlerts();
+}
+function clearAlerts(){alerts={hi:0,lo:0};alertDismissed=false;saveAlerts();alertMsg();checkAlerts()}
+function checkAlerts(){
+  let msg="";
+  if(spot>0){
+    if(alerts.hi>0&&spot>=alerts.hi)msg="Spot "+usd(spot)+" is at or above your "+usd(alerts.hi)+" alert.";
+    else if(alerts.lo>0&&spot<=alerts.lo)msg="Spot "+usd(spot)+" is at or below your "+usd(alerts.lo)+" alert. Buying window?";
+  }
+  const bar=$("alertbar");
+  if(msg&&!alertDismissed){$("alert-txt").textContent=msg;bar.style.display="flex"}
+  else bar.style.display="none";
+}
+function dismissAlert(){alertDismissed=true;$("alertbar").style.display="none"}
+
+/* ---------- guide (live melt table) ---------- */
+const COINS=[
+ ["Mercury / Roosevelt dime (90%)",0.0723],
+ ["Washington quarter (90%)",0.1808],
+ ["Franklin / Kennedy half (90%)",0.3617],
+ ["Morgan / Peace dollar (90%)",0.7734],
+ ["Kennedy half 1965-70 (40%)",0.1479],
+ ["War nickel 1942-45 (35%)",0.05626],
+ ["Silver Eagle / 1 oz round",1]
+];
+function renderGuide(){
+  $("g-melt").innerHTML=COINS.map(c=>
+    `<div class="fmtrow"><span>${c[0]}</span><span><b>${spot?usd(c[1]*spot):"–"}</b> <span class="b">${c[1]} ozt</span></span></div>`
+  ).join("");
+}
+
+/* ---------- csv export ---------- */
+function exportCSV(){
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  const head="Name,Format,Qty,Ounces,Cost,PurchaseDate,MeltNow,SpotNow";
+  const rows=holds.map(h=>[q(h.name),q(fmtName(h)),h.qty,holdOz(h).toFixed(4),h.cost||"",h.date||"",spot?(holdOz(h)*spot).toFixed(2):"",spot||""].join(","));
+  const d=new Date(),pad=n=>String(n).padStart(2,"0");
+  const name=`silver_holdings_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.csv`;
+  const url=URL.createObjectURL(new Blob([head+"\n"+rows.join("\n")],{type:"text/csv"}));
+  const a=document.createElement("a");a.href=url;a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  $("data-msg").textContent="CSV downloaded: "+name;
+}
+
+/* ---------- premium calc ---------- */
+function calcOz(){
+  const fmt=$("c-fmt").value, qty=parseFloat($("c-qty").value)||1;
+  const per=fmt==="ozc"?(parseFloat($("c-coz").value)||0):fmtById(fmt).oz;
+  return per*qty;
+}
+function calc(){
+  const oz=calcOz();
+  const price=parseFloat($("c-price").value);
+  if(!(oz>0)||!(price>0)||!(spot>0))return;
+  const poz=price/oz, melt=oz*spot, prem=poz-spot, pct=prem/spot*100;
+  $("r-oz").textContent=oz.toFixed(3);
+  $("r-poz").textContent=usd(poz);
+  $("r-melt").textContent=usd(melt);
+  $("r-prem").textContent=(prem>=0?"+":"")+usd(prem);
+  $("r-prem").className=prem<=0?"pos":"";
+  $("r-pct").textContent=(pct>=0?"+":"")+pct.toFixed(2)+"%";
+  $("r-pct").className=pct<=0?"pos":"";
+  $("c-out").style.display="block";
+  const fmt=$("c-fmt").value, qty=parseFloat($("c-qty").value)||1;
+  lastQuote={oz,price,desc:qty+" × "+(fmt==="ozc"?(oz/qty)+" oz custom":fmtById(fmt).n)};
+  $("q-saverow").style.display="flex";
+}
+function fairPrice(){
+  const oz=calcOz(), pct=parseFloat($("t-pct").value);
+  if(!(oz>0)||isNaN(pct)||!(spot>0))return;
+  const melt=oz*spot, max=melt*(1+pct/100);
+  $("t-melt").textContent=usd(melt);
+  $("t-max").textContent=usd(max);
+  $("t-maxoz").textContent=usd(max/oz);
+  $("t-out").style.display="block";
+}
+
+/* ---------- stats ---------- */
+let goal=0;
+function renderStats(){
+  let toz=0,tc=0,costOz=0,cost=0,bOz=0,jOz=0;
+  const byFmt={};
+  holds.forEach(h=>{
+    const oz=holdOz(h);
+    toz+=oz;tc+=h.cost||0;
+    if(h.cost>0){costOz+=oz;cost+=h.cost}
+    if(h.fmt==="ozc"||fmtById(h.fmt).cat==="b")bOz+=oz;else jOz+=oz;
+    const key=h.fmt==="ozc"?"Custom":fmtById(h.fmt).n;
+    byFmt[key]=(byFmt[key]||0)+oz;
+  });
+  const melt=toz*spot, pl=melt-tc;
+  const be=costOz>0?cost/costOz:0;
+  const lines=[];
+  lines.push(["Total ounces",toz.toFixed(2)]);
+  lines.push(["Melt value",spot?usd(melt,0):"–"]);
+  lines.push(["Cost basis",tc?usd(tc,0):"–"]);
+  if(spot&&tc){
+    lines.push(["Gain / loss",`<span class="${pl>=0?"pos":"neg"}">${pl>=0?"+":""}${usd(pl,0)} (${(pl/tc*100).toFixed(1)}%)</span>`]);
+  }
+  if(be>0){
+    lines.push(["Avg paid / oz",usd(be)]);
+    lines.push(["Break-even spot",`<span class="${spot>=be?"pos":"neg"}">${usd(be)}</span>`]);
+    if(costOz<toz)lines.push(["Note",`<span style="font-size:11px;color:var(--dim)">${(toz-costOz).toFixed(2)} oz has no cost logged</span>`]);
+  }
+  if(sold.length){
+    const realized=sold.reduce((a,h)=>a+(h.cost?h.soldFor-h.cost:0),0);
+    lines.push(["Realized P/L (sold)",`<span class="${realized>=0?"pos":"neg"}">${realized>=0?"+":""}${usd(realized,0)}</span>`]);
+  }
+  $("stats-main").innerHTML=lines.map(l=>`<div class="line"><span>${l[0]}</span><b>${l[1]}</b></div>`).join("");
+
+  /* goal */
+  if(goal>0){
+    const p=Math.min(toz/goal*100,100);
+    $("g-out").style.display="block";
+    $("g-txt").textContent=p.toFixed(1)+"% of "+goal+" oz";
+    $("g-bar").style.width=p+"%";
+    $("g-have").textContent=toz.toFixed(2)+" oz stacked";
+    $("g-need").textContent=toz>=goal?"Goal hit":(goal-toz).toFixed(2)+" oz to go";
+  }else{$("g-out").style.display="none"}
+
+  /* allocation */
+  const bp=toz?bOz/toz*100:0;
+  $("stats-alloc").innerHTML=toz?`
+    <div class="line"><span>Bullion</span><b>${bOz.toFixed(2)} oz (${bp.toFixed(0)}%)</b></div>
+    <div class="bar"><i style="width:${bp}%"></i></div>
+    <div class="line" style="margin-top:8px"><span>Junk / 90%</span><b>${jOz.toFixed(2)} oz (${(100-bp).toFixed(0)}%)</b></div>
+    <div class="bar"><i class="g" style="width:${100-bp}%"></i></div>`
+    :'<div class="empty" style="padding:4px 0">No holdings yet.</div>';
+
+  /* by format */
+  const rows=Object.entries(byFmt).sort((a,b)=>b[1]-a[1]);
+  $("stats-fmt").innerHTML=rows.length?rows.map(([n,oz])=>
+    `<div class="fmtrow"><span>${esc(n)}</span><span><b>${oz.toFixed(2)} oz</b> <span class="b">${toz?(oz/toz*100).toFixed(0):0}%</span></span></div>`
+  ).join(""):'<div class="empty" style="padding:4px 0">No holdings yet.</div>';
+}
+async function setGoal(){
+  const v=parseFloat($("g-oz").value);
+  if(!(v>0))return;
+  goal=v;$("g-oz").value="";
+  await store.set("goal",String(goal));
+  renderStats();
+}
+
+/* ---------- backup / restore ---------- */
+function backupBlob(){
+  return JSON.stringify({app:"silver-ledger",ver:3,exported:new Date().toISOString(),spot,gold,goal,alerts,holds,sold,watch,hist},null,1);
+}
+function exportJSON(){
+  const d=new Date(), pad=n=>String(n).padStart(2,"0");
+  const name=`stack_backup_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.json`;
+  const url=URL.createObjectURL(new Blob([backupBlob()],{type:"application/json"}));
+  const a=document.createElement("a");a.href=url;a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  $("data-msg").textContent="Backup downloaded: "+name;
+}
+async function copyJSON(){
+  try{await navigator.clipboard.writeText(backupBlob());$("data-msg").textContent="Copied to clipboard.";}
+  catch(e){$("data-msg").textContent="Clipboard blocked. Use Download instead.";}
+}
+function importJSON(){
+  const f=$("imp-file").files[0];
+  if(!f){$("data-msg").textContent="Pick a backup file first.";return}
+  const rd=new FileReader();
+  rd.onload=async()=>{
+    try{
+      const d=JSON.parse(rd.result);
+      const arr=Array.isArray(d)?d:d.holds;
+      if(!Array.isArray(arr))throw new Error("no holdings array");
+      const clean=arr.filter(h=>h&&h.fmt&&h.qty>0).map(h=>({
+        id:h.id||Date.now()+Math.random(),
+        name:String(h.name||fmtById(h.fmt).n).slice(0,120),
+        fmt:fmtById(h.fmt)?h.fmt:"oz1",
+        qty:+h.qty, cost:+h.cost||0, date:h.date||"",
+        ...(h.customOz>0?{customOz:+h.customOz}:{})
+      }));
+      if(!clean.length)throw new Error("no valid holdings");
+      if(!confirm(`Replace current ${holds.length} lot(s) with ${clean.length} from backup?`))return;
+      holds=clean;
+      if(d.goal>0){goal=+d.goal;await store.set("goal",String(goal))}
+      if(Array.isArray(d.hist)){hist=d.hist.slice(-HIST_MAX);saveHist()}
+      if(Array.isArray(d.sold)){sold=d.sold.filter(h=>h&&h.fmt&&h.qty>0&&h.soldFor>0);saveSold()}
+      if(Array.isArray(d.watch)){watch=d.watch.filter(q=>q&&q.oz>0&&q.price>0);saveWatch()}
+      if(d.alerts&&typeof d.alerts==="object"){alerts={hi:+d.alerts.hi||0,lo:+d.alerts.lo||0};saveAlerts();alertMsg()}
+      await saveHolds();
+      renderList();renderStats();renderSold();renderWatch();drawSpark();
+      $("data-msg").textContent="Restored "+clean.length+" lot(s).";
+    }catch(e){$("data-msg").textContent="Import failed: "+e.message}
+  };
+  rd.readAsText(f);
+}
+
+/* ---------- tabs & clock ---------- */
+function tab(t,btn){
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("on"));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("on"));
+  $("tab-"+t).classList.add("on");btn.classList.add("on");
+  if(t==="stats")renderStats();
+}
+function tick(){$("clock").textContent=new Date().toLocaleString("en-US",{weekday:"short",hour:"2-digit",minute:"2-digit"})}
+tick();setInterval(tick,30000);
+
+/* ---------- boot ---------- */
+(async()=>{
+  const s=await store.get("spot");if(s)spot=parseFloat(s)||0;
+  const g=await store.get("gold");if(g)gold=parseFloat(g)||0;
+  const gl=await store.get("goal");if(gl)goal=parseFloat(gl)||0;
+  const hr=await store.get("hist");if(hr){try{hist=JSON.parse(hr)||[]}catch(e){hist=[]}}
+  const sr=await store.get("sold");if(sr){try{sold=JSON.parse(sr)||[]}catch(e){sold=[]}}
+  const wr=await store.get("watch");if(wr){try{watch=JSON.parse(wr)||[]}catch(e){watch=[]}}
+  const ar=await store.get("alerts");if(ar){try{const a=JSON.parse(ar);alerts={hi:+a.hi||0,lo:+a.lo||0}}catch(e){}}
+  alertMsg();
+  if(spot){srcState("man","CACHED");paint()}
+  await loadHolds();
+  renderSold();renderWatch();renderGuide();
+  fetchSpot();
+  /* offline support when hosted (GitHub Pages etc.) */
+  if("serviceWorker" in navigator&&location.protocol==="https:"){
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
+  /* auto-refresh every 5 min while open, and on return to foreground */
+  setInterval(fetchSpot,5*60*1000);
+  document.addEventListener("visibilitychange",()=>{
+    if(!document.hidden&&Date.now()-lastFetch>5*60*1000)fetchSpot();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "Silver Ledger",
+  "short_name": "Silver",
+  "start_url": "./silver-tracker.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#e8e1cd",
+  "theme_color": "#f5f0e1",
+  "icons": [
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
