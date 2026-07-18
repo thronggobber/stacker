@@ -498,32 +498,12 @@ async function setManual(){
 }
 
 /* ---------- holdings ---------- */
-const SEED=[
- {id:1,name:"2026 Silver Eagle BU",fmt:"oz1",qty:1,cost:58.62},
- {id:2,name:"1 oz rounds (at-spot deal)",fmt:"oz1",qty:7,cost:413.56},
- {id:3,name:"Maple Leaf (random yr)",fmt:"oz1",qty:1,cost:61.34},
- {id:4,name:"Buffalo rounds",fmt:"oz1",qty:10,cost:609.70},
- {id:5,name:"1 oz rounds (secondary)",fmt:"oz1",qty:14,cost:881.22},
- {id:6,name:"2026 Maple Leaf BU",fmt:"oz1",qty:1,cost:60.23},
- {id:7,name:"1/10 oz rounds (secondary)",fmt:"oz01",qty:2,cost:27.92},
- {id:8,name:"Aztec Calendar round",fmt:"oz1",qty:1,cost:67.16},
- {id:9,name:"90% avg circ ($1 FV each)",fmt:"fv1",qty:6,cost:286.62},
- {id:10,name:"Franklin halves BU",fmt:"fv05",qty:2,cost:49.26},
- {id:11,name:"Silver Eagle (random yr)",fmt:"oz1",qty:1,cost:58.95},
- {id:12,name:"1 oz bars (secondary)",fmt:"oz1",qty:2,cost:139.76},
- {id:13,name:"1 oz bar APMEX",fmt:"oz1",qty:1,cost:72.61},
- {id:14,name:"1/10 oz rounds APMEX",fmt:"oz01",qty:5,cost:52.40},
- {id:15,name:"90% $10 FV roll",fmt:"fv10",qty:1,cost:429.79},
- {id:16,name:"2 oz round (secondary)",fmt:"oz2",qty:1,cost:125.31},
- {id:17,name:"5 oz bar (secondary)",fmt:"oz5",qty:1,cost:339.36}
-];
 let holds=[], editingId=null, armedId=null, armTimer=null, lastDeleted=null, snackTimer=null;
 let sold=[], watch=[], alerts={hi:0,lo:0}, alertDismissed=false, lastQuote=null;
 
 async function loadHolds(){
   const raw=await store.get("holds");
   if(raw){try{holds=JSON.parse(raw)}catch(e){holds=[]}}
-  else{holds=SEED.slice();saveHolds()}
   renderList();renderStats();
 }
 async function saveHolds(){await store.set("holds",JSON.stringify(holds))}
