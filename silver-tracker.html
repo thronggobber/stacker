@@ -144,9 +144,9 @@ ul.tips li{font-size:13px;line-height:1.55;margin-bottom:7px}
   <div id="sparkcap"></div>
   <div class="anchors">
     <div><div class="k">$1 FV 90%</div><div class="v" id="a1">–</div></div>
-    <div><div class="k">$100 FV bag</div><div class="v" id="a2">–</div></div>
-    <div><div class="k">10 oz bar</div><div class="v" id="a3">–</div></div>
-    <div><div class="k">Kilo</div><div class="v" id="a4">–</div></div>
+    <div><div class="k">Stack melt</div><div class="v" id="a2">–</div></div>
+    <div><div class="k">Gain / loss</div><div class="v" id="a3">–</div></div>
+    <div><div class="k">Break-even /oz</div><div class="v" id="a4">–</div></div>
   </div>
   <div class="manrow">
     <input type="number" inputmode="decimal" step="0.01" id="manspot" placeholder="Set spot manually">
@@ -155,13 +155,8 @@ ul.tips li{font-size:13px;line-height:1.55;margin-bottom:7px}
   </div>
 </div>
 
-<section id="tab-stack" class="on">
+<section id="tab-items">
   <h2>Holdings</h2>
-  <div class="tot">
-    <div><div class="k">Ounces</div><div class="v" id="toz">0</div></div>
-    <div><div class="k">Melt value</div><div class="v" id="tmelt">$0</div></div>
-    <div><div class="k">Gain / loss</div><div class="v" id="tpl">$0</div></div>
-  </div>
   <div class="sortrow">
     <select id="sort" onchange="renderList()">
       <option value="new">Newest first</option>
@@ -236,8 +231,8 @@ ul.tips li{font-size:13px;line-height:1.55;margin-bottom:7px}
   <div class="note">Uses the format and qty selected above. Under 0% premium means below melt. Junk silver reference: $1 face value = 0.715 oz, war nickel = 0.0563 oz, 40% half = 0.1479 oz. Check against the dealer's live checkout price, not a cached table.</div>
 </section>
 
-<section id="tab-stats">
-  <h2>Stack stats</h2>
+<section id="tab-stack" class="on">
+  <h2>Overview</h2>
   <div class="out" id="stats-main"></div>
   <h2>Goal</h2>
   <div style="display:flex;gap:8px">
@@ -263,6 +258,26 @@ ul.tips li{font-size:13px;line-height:1.55;margin-bottom:7px}
   <div class="out" id="stats-alloc"></div>
   <h2>By format</h2>
   <div class="out" id="stats-fmt"></div>
+</section>
+
+<section id="tab-deals">
+  <h2>What a deal looks like right now</h2>
+  <div class="out" id="g-fair"></div>
+  <div class="note">Computed live from spot using typical premium ranges. At or under the low number is a strong buy. Over the high number needs a reason.</div>
+  <h2>Live deal pages</h2>
+  <div class="out glinks">
+    <a href="https://findbullionprices.com/deals/" target="_blank" rel="noopener">FindBullionPrices <span>all dealers ranked</span></a>
+    <a href="https://sdbullion.com/deals" target="_blank" rel="noopener">SD Bullion deals <span>deal of the day</span></a>
+    <a href="https://monumentmetals.com/flash-deals" target="_blank" rel="noopener">Monument flash deals <span>low premium</span></a>
+    <a href="https://herobullion.com/deals/" target="_blank" rel="noopener">Hero Bullion deals <span>fractional</span></a>
+    <a href="https://silver.com/deals/" target="_blank" rel="noopener">Silver.com deals <span>silver only</span></a>
+    <a href="https://www.jmbullion.com/daily-deals/" target="_blank" rel="noopener">JM Bullion daily deals <span>rotates daily</span></a>
+    <a href="https://www.apmex.com/deals" target="_blank" rel="noopener">APMEX deals <span>selection</span></a>
+    <a href="https://www.boldpreciousmetals.com/deals" target="_blank" rel="noopener">BOLD deals <span>low premium</span></a>
+    <a href="https://www.moneymetals.com/specials" target="_blank" rel="noopener">Money Metals specials <span>starter deals</span></a>
+    <a href="https://bullionexchanges.com/deals" target="_blank" rel="noopener">Bullion Exchanges <span>NY based</span></a>
+  </div>
+  <div class="note">Dealer sites block apps from pulling prices directly, so the deals live on their pages where they are always current. Workflow: spot a candidate above, vet it on the Premium tab against the fair-price table, save the quote, buy the green one. Local coin shops can beat all of these on cash deals.</div>
 </section>
 
 <section id="tab-guide">
@@ -306,17 +321,6 @@ ul.tips li{font-size:13px;line-height:1.55;margin-bottom:7px}
     <div class="fmtrow"><span>G/S ratio</span><span><b>gold ÷ silver spot</b></span></div>
   </div>
   <div class="note">Historically the gold/silver ratio has averaged far below recent levels. A high ratio is the classic argument for stacking silver over gold; a collapse in the ratio is the classic argument for trading silver into gold.</div>
-  <h2>Dealers</h2>
-  <div class="out glinks">
-    <a href="https://findbullionprices.com" target="_blank" rel="noopener">FindBullionPrices <span>compare all</span></a>
-    <a href="https://www.apmex.com" target="_blank" rel="noopener">APMEX <span>selection</span></a>
-    <a href="https://www.jmbullion.com" target="_blank" rel="noopener">JM Bullion <span>deals</span></a>
-    <a href="https://sdbullion.com" target="_blank" rel="noopener">SD Bullion <span>low premium</span></a>
-    <a href="https://monumentmetals.com" target="_blank" rel="noopener">Monument Metals <span>low premium</span></a>
-    <a href="https://www.boldpreciousmetals.com" target="_blank" rel="noopener">BOLD <span>low premium</span></a>
-    <a href="https://herobullion.com" target="_blank" rel="noopener">Hero Bullion <span>fractional</span></a>
-  </div>
-  <div class="note">Local coin shops skip shipping and sometimes sales tax quirks, and cash deals can beat online premiums. Worth knowing yours.</div>
   <h2>Records &amp; selling</h2>
   <div class="out"><ul class="tips">
     <li>Your cost basis lives on the Stack tab. Export a backup after every purchase; that is your record when you sell.</li>
@@ -343,8 +347,9 @@ ul.tips li{font-size:13px;line-height:1.55;margin-bottom:7px}
 <div id="snack"><span id="snack-txt"></span><button class="act" onclick="undoDel()">Undo</button></div>
 <nav>
   <button class="on" onclick="tab('stack',this)">Stack</button>
+  <button onclick="tab('items',this)">Items</button>
   <button onclick="tab('calc',this)">Premium</button>
-  <button onclick="tab('stats',this)">Stats</button>
+  <button onclick="tab('deals',this)">Deals</button>
   <button onclick="tab('guide',this)">Guide</button>
   <button onclick="tab('data',this)">Data</button>
 </nav>
@@ -405,9 +410,6 @@ function paint(){
   $("spot").classList.remove("flash");void $("spot").offsetWidth;$("spot").classList.add("flash");
   $("gold").textContent=(gold&&spot>0)?("Gold "+usd(gold)+" · G/S ratio "+(gold/spot).toFixed(1)):"";
   $("a1").textContent=spot?usd(spot*0.715):"–";
-  $("a2").textContent=spot?usd(spot*71.5,0):"–";
-  $("a3").textContent=spot?usd(spot*10,0):"–";
-  $("a4").textContent=spot?usd(spot*32.1507,0):"–";
   drawSpark();
   renderList();
   renderStats();
@@ -626,14 +628,21 @@ function renderList(){
         </div></div>`;
     }).join("");
   }
-  let toz=0,tc=0;
-  holds.forEach(h=>{toz+=holdOz(h);tc+=h.cost||0});
   $("cnt").textContent=holds.length+" lot"+(holds.length===1?"":"s");
-  $("toz").textContent=toz.toFixed(2);
-  $("tmelt").textContent=spot?usd(toz*spot,0):"–";
-  const pl=toz*spot-tc;
-  $("tpl").textContent=(spot&&tc)?((pl>=0?"+":"")+usd(pl,0)):"–";
-  $("tpl").className="v "+((spot&&tc)?(pl>=0?"pos":"neg"):"");
+  renderTiles();
+}
+
+/* gauge tiles: your stack at a glance */
+function renderTiles(){
+  let toz=0,tc=0,costOz=0,cost=0;
+  holds.forEach(h=>{const oz=holdOz(h);toz+=oz;tc+=h.cost||0;if(h.cost>0){costOz+=oz;cost+=h.cost}});
+  $("a2").textContent=(spot&&toz)?usd(toz*spot,0):"–";
+  const pl=toz*spot-tc, a3=$("a3");
+  a3.textContent=(spot&&tc)?((pl>=0?"+":"")+usd(pl,0)):"–";
+  a3.className="v "+((spot&&tc)?(pl>=0?"pos":"neg"):"");
+  const be=costOz>0?cost/costOz:0, a4=$("a4");
+  a4.textContent=be>0?usd(be):"–";
+  a4.className="v "+((be>0&&spot)?(spot>=be?"pos":"neg"):"");
 }
 
 /* ---------- sold / realized ---------- */
@@ -741,9 +750,19 @@ const COINS=[
  ["War nickel 1942-45 (35%)",0.05626],
  ["Silver Eagle / 1 oz round",1]
 ];
+const FAIR=[
+ ["Generic 1 oz round/bar",1,1.04,1.09],
+ ["10 oz bar, per oz",1,1.03,1.07],
+ ["Maple Leaf",1,1.06,1.12],
+ ["Silver Eagle",1,1.15,1.30],
+ ["$1 FV 90% junk",0.715,1.02,1.12]
+];
 function renderGuide(){
   $("g-melt").innerHTML=COINS.map(c=>
     `<div class="fmtrow"><span>${c[0]}</span><span><b>${spot?usd(c[1]*spot):"–"}</b> <span class="b">${c[1]} ozt</span></span></div>`
+  ).join("");
+  $("g-fair").innerHTML=FAIR.map(f=>
+    `<div class="fmtrow"><span>${f[0]}</span><span><b>${spot?usd(spot*f[1]*f[2])+" to "+usd(spot*f[1]*f[3]):"–"}</b></span></div>`
   ).join("");
 }
 
@@ -912,7 +931,7 @@ function tab(t,btn){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("on"));
   document.querySelectorAll("nav button").forEach(b=>b.classList.remove("on"));
   $("tab-"+t).classList.add("on");btn.classList.add("on");
-  if(t==="stats")renderStats();
+  if(t==="stack")renderStats();
 }
 function tick(){$("clock").textContent=new Date().toLocaleString("en-US",{weekday:"short",hour:"2-digit",minute:"2-digit"})}
 tick();setInterval(tick,30000);
