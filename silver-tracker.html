@@ -321,6 +321,23 @@ ul.tips li{font-size:13px;line-height:1.55;margin-bottom:7px}
     <div class="fmtrow"><span>G/S ratio</span><span><b>gold ÷ silver spot</b></span></div>
   </div>
   <div class="note">Historically the gold/silver ratio has averaged far below recent levels. A high ratio is the classic argument for stacking silver over gold; a collapse in the ratio is the classic argument for trading silver into gold.</div>
+  <h2>Gold · for when you cross over</h2>
+  <div class="out" id="g-gold"></div>
+  <div class="out" style="margin-top:8px">
+    <div class="fmtrow"><span>1 oz bars (recognized)</span><span><b>1 - 4%</b></span></div>
+    <div class="fmtrow"><span>Maples / Krugerrands / Philharmonics</span><span><b>2 - 5%</b></span></div>
+    <div class="fmtrow"><span>Eagles / Buffalos</span><span><b>3 - 7%</b></span></div>
+    <div class="fmtrow"><span>1/10 oz coins</span><span><b>8 - 18%</b></span></div>
+    <div class="fmtrow"><span>Gram bars</span><span><b>10 - 25%</b></span></div>
+  </div>
+  <div class="out" style="margin-top:8px"><ul class="tips">
+    <li>Gold premiums are percentages of a much bigger number. 5% on an ounce of gold buys a whole ounce of silver. Shop it harder than you shop silver.</li>
+    <li>1 oz coins and bars are the efficient entry. Fractional gold is convenience you pay double-digit premium for.</li>
+    <li>Stick to instantly recognized pieces: Eagle, Buffalo, Maple, Krugerrand, or PAMP/Valcambi bars in sealed assay cards. Recognition is liquidity.</li>
+    <li>Fakes are a bigger problem in gold than silver, tungsten has nearly the same density. Same reputable dealers, same verification rules, more caution on the secondary market.</li>
+    <li>The classic play: when the gold/silver ratio (top of this app) gets historically low, trade silver ounces into gold. When it is historically high, silver is the buy. No rush, the ratio moves in years.</li>
+    <li>Same Premium tab math works for gold. Punch in the dealer total and gold spot from the gauge as a manual check.</li>
+  </ul></div>
   <h2>Records &amp; selling</h2>
   <div class="out"><ul class="tips">
     <li>Your cost basis lives on the Stack tab. Export a backup after every purchase; that is your record when you sell.</li>
@@ -757,12 +774,16 @@ const FAIR=[
  ["Silver Eagle",1,1.15,1.30],
  ["$1 FV 90% junk",0.715,1.02,1.12]
 ];
+const GOLDROWS=[["1 oz coin/bar",1],["1/2 oz",0.5],["1/4 oz",0.25],["1/10 oz",0.1],["1 gram",0.0321507]];
 function renderGuide(){
   $("g-melt").innerHTML=COINS.map(c=>
     `<div class="fmtrow"><span>${c[0]}</span><span><b>${spot?usd(c[1]*spot):"–"}</b> <span class="b">${c[1]} ozt</span></span></div>`
   ).join("");
   $("g-fair").innerHTML=FAIR.map(f=>
     `<div class="fmtrow"><span>${f[0]}</span><span><b>${spot?usd(spot*f[1]*f[2])+" to "+usd(spot*f[1]*f[3]):"–"}</b></span></div>`
+  ).join("");
+  $("g-gold").innerHTML=GOLDROWS.map(r=>
+    `<div class="fmtrow"><span>${r[0]}</span><span><b>${gold?usd(r[1]*gold):"–"}</b> <span class="b">melt</span></span></div>`
   ).join("");
 }
 
